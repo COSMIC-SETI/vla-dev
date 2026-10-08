@@ -38,6 +38,7 @@ NIFS = 2
 FPGA_CLOCK_RATE_HZ = 256000000
 FIRMWARE_TYPE_8BIT = 2
 FIRMWARE_TYPE_3BIT = 3
+FIRMWARE_TYPE_8BIT_1ANT = 4 # 8-bit, pipeline 0 only. Pipeline 1 has DTS + eth blocks but no DSP
 DEFAULT_FIRMWARE_TYPE = FIRMWARE_TYPE_8BIT
 DEFAULT_DTS_LANE_MAPS = [[0,1,3,7,6,8,2,4,5,9,11,10], [4,5,7,3,2,8,6,0,1,9,11,10]]
 NTIME_PACKET = 32
@@ -168,9 +169,18 @@ class CosmicFengine():
             firmware_type = DEFAULT_FIRMWARE_TYPE
             self.logger.info("FPGA is not programmed. Defaulting to firmware type %d" % firmware_type)
 
+        self.firmware_type = firmware_type
+
         if firmware_type == FIRMWARE_TYPE_8BIT:
             self.logger.info("Initializing control blocks for 8-bit mode")
             self._initialize_blocks_8bit()
+        elif firmware_type == FIRMWARE_TYPE_8BIT_1ANT and self.pipeline_id == 0:
+            self.logger.info("Initializing control blocks for single-antenna 8-bit mode")
+            self._initialize_blocks_8bit()
+        elif firmware_type == FIRMWARE_TYPE_8BIT_1ANT:
+            self.logger.info("Single-antenna 8-bit firmware has no DSP in pipeline %d. "
+                    "Using minimal control set." % self.pipeline_id)
+            self._initialize_blocks_basic()
         elif firmware_type == FIRMWARE_TYPE_3BIT:
             self.logger.info("Initializing control blocks for 3-bit mode")
             self._initialize_blocks_3bit()
